@@ -90,17 +90,32 @@ export default function WeeklyReportView() {
         </div>
       ) : (
         <>
-          {/* Ringkasan angka */}
+          {/* Ringkasan angka + perbandingan minggu lalu */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { emoji: "📚", value: report.totalSessions, label: "Sesi" },
-              { emoji: "🎯", value: report.avgScore, label: "Rata-rata Nilai" },
+              {
+                emoji: "📚",
+                value: report.totalSessions,
+                label: "Sesi",
+                delta: report.delta.sessions,
+              },
+              {
+                emoji: "🎯",
+                value: report.avgScore,
+                label: "Rata-rata Nilai",
+                delta: report.delta.avgScore,
+              },
               {
                 emoji: "✅",
                 value: `${report.correct}/${report.totalQuestions}`,
                 label: "Soal Benar",
               },
-              { emoji: "⭐", value: report.totalStars, label: "Bintang" },
+              {
+                emoji: "⭐",
+                value: report.totalStars,
+                label: "Bintang",
+                delta: report.delta.stars,
+              },
             ].map((s) => (
               <div
                 key={s.label}
@@ -115,6 +130,25 @@ export default function WeeklyReportView() {
                 <span className="text-[11px] font-bold text-night/50">
                   {s.label}
                 </span>
+                {s.delta !== undefined &&
+                  (report.previous.totalSessions > 0 ? (
+                    <span
+                      className={`text-[10px] font-bold ${
+                        s.delta > 0
+                          ? "text-mint-deep"
+                          : s.delta < 0
+                            ? "text-coral-deep"
+                            : "text-night/40"
+                      }`}
+                    >
+                      {s.delta > 0 ? "▲" : s.delta < 0 ? "▼" : "—"}{" "}
+                      {Math.abs(s.delta)} vs mgg lalu
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-night/30">
+                      minggu pertama
+                    </span>
+                  ))}
               </div>
             ))}
           </section>

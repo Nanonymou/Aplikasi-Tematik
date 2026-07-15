@@ -22,17 +22,39 @@ export interface TopicPerformance {
   bestScore: number;
 }
 
-export interface WeeklyReport {
+export interface WeeklyStats {
   totalSessions: number;
   totalStars: number;
   avgScore: number;
-  /** Jumlah soal benar & total dalam seminggu. */
   correct: number;
   totalQuestions: number;
+}
+
+export interface WeeklyReport extends WeeklyStats {
+  /** Statistik minggu sebelumnya (7–14 hari lalu) untuk perbandingan. */
+  previous: WeeklyStats;
+  /** Selisih vs minggu lalu: sesi, bintang, rata-rata nilai. */
+  delta: { sessions: number; stars: number; avgScore: number };
   mastered: TopicPerformance[];
   needsPractice: TopicPerformance[];
   /** Semua topik yang dilatih minggu ini, terurut nilai menurun. */
   allTopics: TopicPerformance[];
+}
+
+function summarize(sessions: SessionResult[]): WeeklyStats {
+  const totalQuestions = sessions.reduce((sum, s) => sum + s.total, 0);
+  return {
+    totalSessions: sessions.length,
+    totalStars: sessions.reduce((sum, s) => sum + s.stars, 0),
+    correct: sessions.reduce((sum, s) => sum + s.correct, 0),
+    totalQuestions,
+    avgScore:
+      sessions.length === 0
+        ? 0
+        : Math.round(
+            sessions.reduce((sum, s) => sum + s.score, 0) / sessions.length,
+          ),
+  };
 }
 
 function topicKey(s: SessionResult): string {
@@ -42,9 +64,17 @@ function topicKey(s: SessionResult): string {
 /** Susun laporan 7 hari terakhir dari sesi anak yang sedang masuk. */
 export function buildWeeklyReport(now: number = Date.now()): WeeklyReport {
   const since = now - WEEK_MS;
-  const sessions = loadSessionResults().filter(
+  const all = loadSessionResults();
+  const sessions = all.filter(
     (s) => new Date(s.finishedAt).getTime() >= since,
   );
+  // Minggu sebelumnya: 7–14 hari lalu.
+  const prevSessions = all.filter((s) => {
+    const t = new Date(s.finishedAt).getTime();
+    return t >= now - 2 * WEEK_MS && t < since;
+  });
+  const current = summarize(sessions);
+  const previous = summarize(prevSessions);
 
   const byTopic = new Map<string, SessionResult[]>();
   for (const s of sessions) {
@@ -70,18 +100,14 @@ export function buildWeeklyReport(now: number = Date.now()): WeeklyReport {
   });
   allTopics.sort((a, b) => b.avgScore - a.avgScore);
 
-  const totalQuestions = sessions.reduce((sum, s) => sum + s.total, 0);
   return {
-    totalSessions: sessions.length,
-    totalStars: sessions.reduce((sum, s) => sum + s.stars, 0),
-    correct: sessions.reduce((sum, s) => sum + s.correct, 0),
-    totalQuestions,
-    avgScore:
-      sessions.length === 0
-        ? 0
-        : Math.round(
-            sessions.reduce((sum, s) => sum + s.score, 0) / sessions.length,
-          ),
+    ...current,
+    previous,
+    delta: {
+      sessions: current.totalSessions - previous.totalSessions,
+      stars: current.totalStars - previous.totalStars,
+      avgScore: current.avgScore - previous.avgScore,
+    },
     mastered: allTopics.filter((t) => t.avgScore >= MASTERY_SCORE),
     needsPractice: allTopics.filter((t) => t.avgScore < NEEDS_PRACTICE_SCORE),
     allTopics,
