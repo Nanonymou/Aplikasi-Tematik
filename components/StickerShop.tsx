@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
+import StickerCard from "@/components/StickerCard";
 import {
   buySticker,
   getOwnedStickers,
   getStarBalance,
   STICKER_CATALOG,
+  type Sticker,
 } from "@/lib/stickers";
 import { playCheer, playWomp } from "@/lib/sounds";
 
@@ -34,13 +36,16 @@ export default function StickerShop() {
     );
   }
 
-  const buy = (id: string, name: string) => {
-    const error = buySticker(id);
+  const buy = (sticker: Sticker) => {
+    const error = buySticker(sticker.id);
     if (error) {
       setMessage({ text: error, kind: "err" });
       playWomp();
     } else {
-      setMessage({ text: `Yeay! Stiker ${name} jadi milikmu! 🎉`, kind: "ok" });
+      setMessage({
+        text: `Yeay! Stiker ${sticker.name} jadi milikmu! 🎉`,
+        kind: "ok",
+      });
       playCheer();
     }
     refresh();
@@ -91,39 +96,15 @@ export default function StickerShop() {
       </AnimatePresence>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-        {STICKER_CATALOG.map((sticker) => {
-          const isOwned = owned.includes(sticker.id);
-          const affordable = balance >= sticker.price;
-          return (
-            <div
-              key={sticker.id}
-              className={`flex flex-col items-center gap-2 rounded-3xl p-4 text-center shadow-pop-sm ${
-                isOwned ? "bg-mint/20" : "bg-white/85"
-              }`}
-            >
-              <span className="text-5xl" aria-hidden>
-                {sticker.emoji}
-              </span>
-              <span className="text-sm font-extrabold text-night">
-                {sticker.name}
-              </span>
-              {isOwned ? (
-                <span className="rounded-xl bg-mint px-3 py-1 text-xs font-extrabold text-white">
-                  ✓ Milikku
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => buy(sticker.id, sticker.name)}
-                  disabled={!affordable}
-                  className="btn-pop w-full bg-sunshine px-3 py-2 text-sm text-night hover:bg-sunshine-dark disabled:opacity-40"
-                >
-                  ⭐ {sticker.price}
-                </button>
-              )}
-            </div>
-          );
-        })}
+        {STICKER_CATALOG.map((sticker) => (
+          <StickerCard
+            key={sticker.id}
+            sticker={sticker}
+            owned={owned.includes(sticker.id)}
+            affordable={balance >= sticker.price}
+            onBuy={buy}
+          />
+        ))}
       </div>
     </main>
   );
