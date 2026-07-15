@@ -10,7 +10,7 @@ import {
   type Question,
 } from "@/lib/questions";
 import { playCheer, playFanfare, playWomp } from "@/lib/sounds";
-import { saveTimerResult } from "@/lib/timer";
+import { getTimerBest, saveTimerResult } from "@/lib/timer";
 
 const DURATION = 60; // detik
 
@@ -24,6 +24,9 @@ export default function TimerChallenge({ mode }: { mode: MathMode }) {
   const [correct, setCorrect] = useState(0);
   const [wrong, setWrong] = useState(0);
   const [flash, setFlash] = useState<"ok" | "err" | null>(null);
+  /** Rekor sebelumnya + apakah sesi ini memecahkannya (dihitung saat selesai). */
+  const [prevBest, setPrevBest] = useState(0);
+  const [isNewRecord, setIsNewRecord] = useState(false);
   const deadlineRef = useRef<number>(0);
 
   const label = MODE_LABELS[mode];
@@ -57,9 +60,12 @@ export default function TimerChallenge({ mode }: { mode: MathMode }) {
     return () => window.clearInterval(id);
   }, [phase]);
 
-  // Simpan skor bonus (stub) sekali saat selesai.
+  // Simpan skor bonus (stub) sekali saat selesai + hitung rekor.
   useEffect(() => {
     if (phase !== "done") return;
+    const best = getTimerBest(mode); // rekor SEBELUM sesi ini disimpan
+    setPrevBest(best);
+    setIsNewRecord(correct > best);
     playFanfare();
     saveTimerResult({
       mode,
@@ -147,21 +153,47 @@ export default function TimerChallenge({ mode }: { mode: MathMode }) {
           {correct >= 15 ? "🏆" : correct >= 8 ? "🌟" : "⚡"}
         </motion.div>
         <h1 className="text-3xl font-extrabold text-sky-deep">Waktu Habis!</h1>
+
+        {/* Rayakan rekor baru */}
+        {isNewRecord && correct > 0 && (
+          <motion.div
+            initial={{ scale: 0, rotate: -8 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.3, type: "spring", bounce: 0.6 }}
+            className="rounded-2xl bg-sunshine px-5 py-2 text-lg font-extrabold text-night shadow-pop-sm"
+          >
+            🎉 REKOR BARU!
+          </motion.div>
+        )}
+
         <div className="w-full rounded-3xl bg-white/85 p-6 shadow-pop">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <div className="text-4xl font-extrabold text-mint-deep">
                 {correct}
               </div>
-              <div className="text-sm font-bold text-night/60">Benar</div>
+              <div className="text-xs font-bold text-night/60">Benar</div>
             </div>
             <div>
               <div className="text-4xl font-extrabold text-coral-deep">
                 {wrong}
               </div>
-              <div className="text-sm font-bold text-night/60">Salah</div>
+              <div className="text-xs font-bold text-night/60">Salah</div>
+            </div>
+            <div>
+              <div className="text-4xl font-extrabold text-sky-deep">
+                {Math.max(correct, prevBest)}
+              </div>
+              <div className="text-xs font-bold text-night/60">Rekor</div>
             </div>
           </div>
+          <p className="mt-3 text-xs font-semibold text-night/50">
+            {isNewRecord && correct > 0
+              ? `Kamu pecahkan rekor lama (${prevBest})! Keren! 🌟`
+              : prevBest > 0
+                ? `Rekor terbaikmu ${prevBest}. Ayo lampaui! 💪`
+                : "Ini rekor pertamamu — ayo tingkatkan lagi!"}
+          </p>
           <div className="mt-4 rounded-2xl bg-sunshine/25 py-3 text-lg font-extrabold text-sunshine-dark">
             ⭐ +{bonus} bintang bonus!
           </div>
