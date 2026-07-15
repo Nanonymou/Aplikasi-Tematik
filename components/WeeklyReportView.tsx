@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import TopicBarChart from "@/components/TopicBarChart";
 import {
   buildWeeklyReport,
   type TopicPerformance,
@@ -116,6 +117,18 @@ export default function WeeklyReportView() {
                 </span>
               </div>
             ))}
+          </section>
+
+          {/* Grafik nilai per topik */}
+          <section className="rounded-3xl bg-white/85 p-5 shadow-pop">
+            <h2 className="mb-1 text-lg font-extrabold text-night">
+              📊 Nilai per Topik
+            </h2>
+            <p className="mb-4 text-xs font-semibold text-night/50">
+              Rata-rata nilai tiap topik minggu ini. Garis di angka{" "}
+              {80} adalah batas dikuasai.
+            </p>
+            <TopicBarChart topics={report.allTopics} />
           </section>
 
           {/* Dikuasai */}
