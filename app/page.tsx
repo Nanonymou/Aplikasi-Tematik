@@ -87,6 +87,12 @@ export default function HomePage() {
 
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
+              href="/timer"
+              className="btn-pop bg-sky px-8 hover:bg-sky-deep"
+            >
+              ⏱️ Mode Kilat
+            </Link>
+            <Link
               href="/dashboard"
               className="btn-pop bg-mint px-8 hover:bg-mint-deep"
             >
