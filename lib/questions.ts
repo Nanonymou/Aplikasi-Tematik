@@ -36,6 +36,17 @@ function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
+/** Satu soal acak untuk mode tertentu (dipakai Mode Kilat). */
+export function randomQuestion(mode: MathMode): Question {
+  const a = 1 + Math.floor(Math.random() * 10); // 1–10
+  const b = 1 + Math.floor(Math.random() * 10); // 1–10
+  if (mode === "perkalian") {
+    return { left: a, right: b, answer: a * b, symbol: "×" };
+  }
+  // Pembagian selalu bulat: (a*b) ÷ b = a.
+  return { left: a * b, right: b, answer: a, symbol: "÷" };
+}
+
 /**
  * Buat 10 soal untuk satu topik.
  * - Perkalian topik 3 → "3 × 1" sampai "3 × 10" (diacak).
