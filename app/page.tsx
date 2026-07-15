@@ -46,12 +46,17 @@ export default function HomePage() {
 
       {user !== null && user !== "guest" && (
         <>
-          <p className="text-xl font-extrabold text-night/80">
-            Halo, {user.avatar} {user.name}!
-          </p>
-          <p className="-mt-6 text-sm font-bold text-night/50">
-            Kelas {user.className} • {user.schoolName}
-          </p>
+          <Link
+            href="/profil"
+            className="flex flex-col items-center gap-1 rounded-3xl px-4 py-1 hover:bg-white/40"
+          >
+            <span className="text-xl font-extrabold text-night/80">
+              Halo, {user.avatar} {user.name}!
+            </span>
+            <span className="text-sm font-bold text-night/50">
+              Kelas {user.className} • {user.schoolName} · lihat profil →
+            </span>
+          </Link>
 
           <div className="grid w-full gap-5 sm:grid-cols-2">
             <Link

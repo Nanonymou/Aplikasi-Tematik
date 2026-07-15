@@ -61,10 +61,10 @@ export function getSpentStars(): number {
   );
 }
 
-/** Saldo bintang yang bisa dibelanjakan anak aktif. */
+/** Saldo bintang yang bisa dibelanjakan anak aktif (tidak pernah negatif). */
 export function getStarBalance(): number {
   const earned = loadSessionResults().reduce((sum, s) => sum + s.stars, 0);
-  return earned - getSpentStars();
+  return Math.max(0, earned - getSpentStars());
 }
 
 /**
