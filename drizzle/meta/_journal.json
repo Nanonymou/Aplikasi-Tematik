@@ -15,6 +15,13 @@
       "when": 1784154897585,
       "tag": "0001_login-lockout",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784158880076,
+      "tag": "0002_user-stickers",
+      "breakpoints": true
     }
   ]
 }

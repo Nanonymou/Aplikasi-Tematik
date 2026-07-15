@@ -43,3 +43,34 @@ export const users = pgTable(
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+/**
+ * Tabel `user_stickers` — stiker yang sudah ditukar anak (PRD: Toko Stiker).
+ * Satu baris = satu kepemilikan; kombinasi (user_id, sticker_id) unik
+ * agar stiker yang sama tidak terbeli dua kali.
+ */
+export const userStickers = pgTable(
+  "user_stickers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** id stiker dari katalog (mis. "kucing", "panda"). */
+    stickerId: varchar("sticker_id", { length: 40 }).notNull(),
+    /** Harga bintang saat ditukar (untuk hitung total belanja). */
+    priceStars: integer("price_stars").notNull(),
+    acquiredAt: timestamp("acquired_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("user_stickers_user_sticker_idx").on(
+      table.userId,
+      table.stickerId,
+    ),
+  ],
+);
+
+export type UserSticker = typeof userStickers.$inferSelect;
+export type NewUserSticker = typeof userStickers.$inferInsert;
