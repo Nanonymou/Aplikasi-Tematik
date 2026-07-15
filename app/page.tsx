@@ -87,6 +87,12 @@ export default function HomePage() {
             >
               📊 Dashboard Nilai
             </Link>
+            <Link
+              href="/toko-stiker"
+              className="btn-pop bg-sunshine px-8 text-night hover:bg-sunshine-dark"
+            >
+              🛍️ Toko Stiker
+            </Link>
             <button
               type="button"
               onClick={() => setConfirmSwitch(true)}
