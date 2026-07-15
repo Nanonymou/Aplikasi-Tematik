@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palet ceria untuk anak SD */
+  --color-sunshine: #ffc93c;
+  --color-sunshine-dark: #f5a623;
+  --color-sky: #58c9f3;
+  --color-sky-deep: #2b98d6;
+  --color-coral: #ff7b54;
+  --color-coral-deep: #e85a31;
+  --color-mint: #4ecc9d;
+  --color-mint-deep: #2ea87c;
+  --color-grape: #9b6ef3;
+  --color-grape-deep: #7a4ddb;
+  --color-night: #1c2433;
+  --color-cream: #fff9ec;
+
+  --font-fun: "Baloo 2", "Comic Sans MS", "Chalkboard SE", ui-rounded,
+    "Segoe UI", sans-serif;
+
+  --shadow-pop: 0 6px 0 rgb(0 0 0 / 0.15);
+  --shadow-pop-sm: 0 4px 0 rgb(0 0 0 / 0.15);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-fun);
+  background: linear-gradient(180deg, #aee7ff 0%, #dff6ff 45%, #fff9ec 100%);
+  background-attachment: fixed;
+  color: var(--color-night);
+}
+
+/* Tombol besar bergaya "pop" untuk jari kecil */
+.btn-pop {
+  @apply inline-flex items-center justify-center gap-2 rounded-3xl px-6 py-3 text-lg font-bold text-white transition-transform duration-100 select-none;
+  box-shadow: var(--shadow-pop);
+}
+.btn-pop:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.animate-float-slow {
+  animation: float-slow 3.5s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+.animate-wiggle {
+  animation: wiggle 1.6s ease-in-out infinite;
+}
