@@ -119,6 +119,64 @@ export async function registerUserDb(
   }
 }
 
+// ---------- Verifikasi PIN (proses masuk) ----------
+
+export const MAX_PIN_ATTEMPTS = 5;
+export const LOCK_SECONDS = 30;
+
+/**
+ * Verifikasi Nama + PIN dengan pembatas percobaan sisi server:
+ * 5x salah beruntun → akun terkunci 30 detik (state di database,
+ * jadi tidak bisa diakali dengan ganti perangkat/refresh).
+ */
+export async function loginUserDb(
+  db: DbClient,
+  name: string,
+  pin: string,
+): Promise<AuthResult> {
+  if (!name?.trim() || !isValidPin(pin))
+    return { error: "Isi nama dan PIN 4 angka dulu ya!" };
+
+  const user = await findUserByNameDb(db, name);
+  if (!user) return { error: "Nama tidak ditemukan. Coba daftar dulu ya!" };
+
+  const now = new Date();
+  if (user.lockedUntil && user.lockedUntil > now) {
+    const seconds = Math.ceil((user.lockedUntil.getTime() - now.getTime()) / 1000);
+    return { error: `Terlalu banyak salah PIN. Tunggu ${seconds} detik dulu ya! ⏳` };
+  }
+
+  if (hashPinServer(user.name, pin) !== user.pinHash) {
+    const failed = user.failedAttempts + 1;
+    if (failed >= MAX_PIN_ATTEMPTS) {
+      await db
+        .update(users)
+        .set({
+          failedAttempts: 0,
+          lockedUntil: new Date(now.getTime() + LOCK_SECONDS * 1000),
+        })
+        .where(eq(users.id, user.id));
+      return { error: `Terlalu banyak salah PIN. Tunggu ${LOCK_SECONDS} detik dulu ya! ⏳` };
+    }
+    await db
+      .update(users)
+      .set({ failedAttempts: failed })
+      .where(eq(users.id, user.id));
+    return {
+      error: `PIN salah. Sisa ${MAX_PIN_ATTEMPTS - failed} kesempatan lagi. Coba ingat-ingat ya! 🤔`,
+    };
+  }
+
+  // Berhasil → bersihkan hitungan gagal dan kunci.
+  if (user.failedAttempts > 0 || user.lockedUntil) {
+    await db
+      .update(users)
+      .set({ failedAttempts: 0, lockedUntil: null })
+      .where(eq(users.id, user.id));
+  }
+  return { user: toPublicUser(user) };
+}
+
 /** Ambil profil publik berdasarkan id (untuk memulihkan sesi dari cookie). */
 export async function getUserByIdDb(
   db: DbClient,

@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import {
   getUserByIdDb,
+  loginUserDb,
   registerUserDb,
   type AuthResult,
   type PublicUser,
@@ -22,6 +23,21 @@ export async function registerAction(
   input: RegistrationInput,
 ): Promise<AuthResult> {
   const result = await registerUserDb(db, input);
+  if (result.user) {
+    await setSessionUserId(result.user.id);
+  }
+  return result;
+}
+
+/**
+ * Endpoint verifikasi PIN (Server Action): cocokkan Nama + PIN,
+ * dengan kunci 30 detik setelah 5x salah, lalu buat sesi cookie.
+ */
+export async function loginAction(
+  name: string,
+  pin: string,
+): Promise<AuthResult> {
+  const result = await loginUserDb(db, name, pin);
   if (result.user) {
     await setSessionUserId(result.user.id);
   }

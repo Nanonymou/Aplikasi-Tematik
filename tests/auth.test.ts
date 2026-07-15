@@ -12,9 +12,13 @@ import {
   findUserByNameDb,
   getUserByIdDb,
   hashPinServer,
+  loginUserDb,
+  MAX_PIN_ATTEMPTS,
   registerUserDb,
   validateRegistration,
 } from "../lib/server/auth";
+import { users } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 async function main() {
   const client = new PGlite();
@@ -74,6 +78,41 @@ async function main() {
   assert.equal(byId?.name, "Sinta");
   assert.equal(await getUserByIdDb(db, "00000000-0000-0000-0000-000000000000"), null);
   console.log("✓ getUserByIdDb untuk pemulihan sesi");
+
+  // ---------- verifikasi PIN (masuk) ----------
+
+  // sukses, case-insensitive
+  const login = await loginUserDb(db, "sInTa", "2468");
+  assert.equal(login.user?.name, "Sinta");
+  assert.ok(!("pinHash" in (login.user ?? {})));
+  console.log("✓ masuk dengan Nama (case-insensitive) + PIN benar");
+
+  // nama tak dikenal
+  const noUser = await loginUserDb(db, "Ghost", "2468");
+  assert.match(noUser.error!, /tidak ditemukan/);
+
+  // PIN salah → pesan sisa kesempatan
+  const wrong = await loginUserDb(db, "Sinta", "9999");
+  assert.match(wrong.error!, /Sisa 4 kesempatan/);
+  console.log("✓ PIN salah diberi sisa kesempatan");
+
+  // 5x salah → terkunci; PIN benar pun ditolak
+  for (let i = 0; i < MAX_PIN_ATTEMPTS; i++) await loginUserDb(db, "Sinta", "9999");
+  const locked = await loginUserDb(db, "Sinta", "2468");
+  assert.match(locked.error!, /Tunggu \d+ detik/);
+  console.log("✓ terkunci setelah 5x salah, PIN benar pun ditolak");
+
+  // kunci berakhir → masuk lagi & hitungan direset
+  await db
+    .update(users)
+    .set({ lockedUntil: new Date(Date.now() - 1000) })
+    .where(eq(users.id, result.user.id));
+  const after = await loginUserDb(db, "Sinta", "2468");
+  assert.equal(after.user?.name, "Sinta");
+  const fresh = await findUserByNameDb(db, "Sinta");
+  assert.equal(fresh!.failedAttempts, 0);
+  assert.equal(fresh!.lockedUntil, null);
+  console.log("✓ setelah kunci berakhir bisa masuk, hitungan direset");
 
   await client.close();
   console.log("\nSEMUA TES AUTH LULUS ✅");

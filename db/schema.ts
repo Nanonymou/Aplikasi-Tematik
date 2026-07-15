@@ -27,6 +27,10 @@ export const users = pgTable(
     pinHash: varchar("pin_hash", { length: 64 }).notNull(),
     /** Akumulasi bintang dari semua sesi latihan. */
     totalStars: integer("total_stars").notNull().default(0),
+    /** Hitungan PIN salah beruntun — reset saat berhasil masuk. */
+    failedAttempts: integer("failed_attempts").notNull().default(0),
+    /** Terkunci sampai waktu ini setelah terlalu banyak PIN salah. */
+    lockedUntil: timestamp("locked_until", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
