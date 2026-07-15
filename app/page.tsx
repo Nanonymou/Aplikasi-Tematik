@@ -94,6 +94,12 @@ export default function HomePage() {
             >
               🔄 Ganti Anak
             </button>
+            <Link
+              href="/pengaturan"
+              className="rounded-2xl bg-white/70 px-4 py-2 text-sm font-bold text-night/60 shadow-pop-sm"
+            >
+              ⚙️ Pengaturan
+            </Link>
           </div>
 
           <ConfirmDialog
