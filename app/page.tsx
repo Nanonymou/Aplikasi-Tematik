@@ -40,6 +40,13 @@ export default function HomePage() {
           </span>
         </Link>
       </div>
+
+      <Link
+        href="/dashboard"
+        className="btn-pop bg-mint px-8 hover:bg-mint-deep"
+      >
+        📊 Dashboard Nilai
+      </Link>
     </main>
   );
 }

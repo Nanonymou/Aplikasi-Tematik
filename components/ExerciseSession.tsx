@@ -242,6 +242,12 @@ export default function ExerciseSession({ mode, topic }: Props) {
             🏠 Beranda
           </Link>
         </div>
+        <Link
+          href="/dashboard"
+          className="text-sm font-bold text-sky-deep underline underline-offset-4"
+        >
+          📊 Lihat Dashboard Nilai
+        </Link>
       </main>
     );
   }
