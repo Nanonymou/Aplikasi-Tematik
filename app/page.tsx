@@ -106,8 +106,9 @@ export default function HomePage() {
             onConfirm={() => {
               logoutUser();
               setConfirmSwitch(false);
-              setUser("guest");
-              router.refresh();
+              // Langsung ke layar selamat datang agar anak berikutnya
+              // bisa daftar/masuk tanpa langkah ekstra.
+              router.push("/masuk");
             }}
             onCancel={() => setConfirmSwitch(false)}
           />
