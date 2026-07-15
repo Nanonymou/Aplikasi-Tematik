@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { isTopicUnlocked, maybeUnlockNextTopic } from "@/lib/levels";
 import {
   generateQuestions,
   MODE_LABELS,
@@ -47,6 +49,7 @@ function finalPraise(score: number): { emoji: string; text: string } {
 }
 
 export default function ExerciseSession({ mode, topic }: Props) {
+  const router = useRouter();
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [index, setIndex] = useState(0);
   const [input, setInput] = useState("");
@@ -57,11 +60,18 @@ export default function ExerciseSession({ mode, topic }: Props) {
   const [correctCount, setCorrectCount] = useState(0);
   const [stars, setStars] = useState(0);
   const [finished, setFinished] = useState(false);
+  /** Nomor topik yang baru terbuka setelah sesi ini (untuk notifikasi Naik Level). */
+  const [unlockedTopic, setUnlockedTopic] = useState<number | null>(null);
 
   // Soal diacak di client agar tidak kena hydration mismatch.
+  // Topik yang masih terkunci tidak boleh dimainkan lewat URL langsung.
   useEffect(() => {
+    if (!isTopicUnlocked(mode, topic)) {
+      router.replace(`/latihan/${mode}`);
+      return;
+    }
     setQuestions(generateQuestions(mode, topic));
-  }, [mode, topic]);
+  }, [mode, topic, router]);
 
   const question = questions?.[index] ?? null;
   const label = MODE_LABELS[mode];
@@ -79,18 +89,21 @@ export default function ExerciseSession({ mode, topic }: Props) {
     }
   }, [index]);
 
-  // Simpan hasil sesi (stub localStorage) sekali saat selesai.
+  // Simpan hasil sesi (stub localStorage) sekali saat selesai,
+  // lalu cek apakah level berikutnya terbuka (Naik Level).
   useEffect(() => {
     if (!finished) return;
+    const score = correctCount * 10;
     saveSessionResult({
       mode,
       topic,
       correct: correctCount,
       total: QUESTIONS_PER_SESSION,
-      score: correctCount * 10,
+      score,
       stars,
       finishedAt: new Date().toISOString(),
     });
+    setUnlockedTopic(maybeUnlockNextTopic(mode, topic, score));
   }, [finished]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = useCallback(() => {
@@ -179,6 +192,34 @@ export default function ExerciseSession({ mode, topic }: Props) {
         <p className="text-lg font-semibold text-night/60">
           {label} {topic} selesai!
         </p>
+
+        {/* Notifikasi Naik Level */}
+        {unlockedTopic !== null && (
+          <motion.div
+            initial={{ scale: 0, rotate: -8 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.5, type: "spring", bounce: 0.6 }}
+            className="w-full rounded-3xl bg-sunshine p-5 text-center shadow-pop"
+          >
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ repeat: Infinity, duration: 1.2 }}
+              className="text-5xl"
+              aria-hidden
+            >
+              🔓
+            </motion.div>
+            <p className="mt-1 text-xl font-extrabold text-night">
+              Naik Level! {label} {unlockedTopic} terbuka! 🎊
+            </p>
+            <Link
+              href={`/latihan/${mode}/${unlockedTopic}`}
+              className="btn-pop mt-3 bg-coral hover:bg-coral-deep"
+            >
+              🚀 Main Level Baru
+            </Link>
+          </motion.div>
+        )}
 
         <div className="w-full rounded-3xl bg-white/80 p-6 shadow-pop">
           <div className="mb-3 flex flex-wrap justify-center gap-1 text-3xl">
