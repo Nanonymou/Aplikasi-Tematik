@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { verifyChallenge } from "@/lib/server/challenge";
+import {
+  createGateCookieValue,
+  GATE_COOKIE,
+  GATE_TTL_MS,
+} from "@/lib/server/gateCookie";
 
 export const dynamic = "force-dynamic";
 
@@ -43,5 +48,20 @@ export async function POST(request: Request) {
   }
 
   const ok = await verifyChallenge(nonce, signature, answerNum);
-  return NextResponse.json({ ok }, { headers: { "Cache-Control": "no-store" } });
+  const response = NextResponse.json(
+    { ok },
+    { headers: { "Cache-Control": "no-store" } },
+  );
+
+  // Jawaban benar → set cookie gate agar middleware meloloskan rute sensitif.
+  if (ok) {
+    response.cookies.set(GATE_COOKIE, await createGateCookieValue(), {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: Math.floor(GATE_TTL_MS / 1000),
+    });
+  }
+  return response;
 }

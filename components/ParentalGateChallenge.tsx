@@ -1,49 +1,78 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import {
-  generateGateChallenge,
-  markGatePassed,
-  type GateChallenge,
-} from "@/lib/parentalGate";
+import { markGatePassed } from "@/lib/parentalGate";
 
 /** Tujuan redirect yang diizinkan setelah lolos gate (anti open-redirect). */
 const ALLOWED_TARGETS = new Set(["/pengaturan", "/laporan"]);
 
+interface Challenge {
+  nonce: string;
+  prompt: string;
+  signature: string;
+}
+
 /**
- * Tantangan Parental Gate: soal perkalian yang angkanya ditulis dalam
- * kata — mudah untuk orang dewasa, sulit untuk anak kecil.
+ * Tantangan Parental Gate memakai API server:
+ * - GET /api/challenge → soal (angka dalam kata, jawaban tak dikirim)
+ * - POST /api/challenge/verify → verifikasi + set cookie gate (dipakai middleware)
  */
 export default function ParentalGateChallenge() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [challenge, setChallenge] = useState<GateChallenge | null>(null);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [input, setInput] = useState("");
   const [wrong, setWrong] = useState(false);
-
-  // Soal dibuat di client agar tidak kena hydration mismatch.
-  useEffect(() => {
-    setChallenge(generateGateChallenge());
-  }, []);
+  const [busy, setBusy] = useState(false);
 
   const target = searchParams.get("ke") ?? "/pengaturan";
   const safeTarget = ALLOWED_TARGETS.has(target) ? target : "/pengaturan";
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!challenge || input === "") return;
-    if (Number(input) === challenge.answer) {
-      markGatePassed();
-      router.replace(safeTarget);
-    } else {
-      // Jawaban salah → soal baru supaya tidak bisa dicoba-coba.
-      setWrong(true);
-      setChallenge(generateGateChallenge());
-      setInput("");
+  const loadChallenge = useCallback(async () => {
+    try {
+      const res = await fetch("/api/challenge", { cache: "no-store" });
+      setChallenge(await res.json());
+    } catch {
+      setChallenge(null);
     }
+  }, []);
+
+  useEffect(() => {
+    loadChallenge();
+  }, [loadChallenge]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!challenge || input === "" || busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/challenge/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nonce: challenge.nonce,
+          signature: challenge.signature,
+          answer: Number(input),
+        }),
+      });
+      const { ok } = await res.json();
+      if (ok) {
+        // Tandai juga di sessionStorage untuk GateGuard sisi client.
+        markGatePassed();
+        router.replace(safeTarget);
+        return;
+      }
+    } catch {
+      // jatuh ke penanganan salah di bawah
+    }
+    // Salah / gagal → soal baru supaya tidak bisa dicoba-coba.
+    setWrong(true);
+    setInput("");
+    await loadChallenge();
+    setBusy(false);
   };
 
   return (
@@ -93,10 +122,10 @@ export default function ParentalGateChallenge() {
         />
         <button
           type="submit"
-          disabled={input === "" || !challenge}
+          disabled={input === "" || !challenge || busy}
           className="btn-pop w-full bg-mint hover:bg-mint-deep disabled:opacity-40"
         >
-          ✅ Periksa
+          {busy ? "Memeriksa…" : "✅ Periksa"}
         </button>
       </form>
 
