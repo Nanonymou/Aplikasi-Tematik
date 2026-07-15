@@ -14,6 +14,9 @@ type RegisterStep = "data" | "pin" | "pin-ulang";
 const inputClass =
   "w-full rounded-2xl border-4 border-night/10 bg-white px-4 py-3 text-lg font-bold text-night placeholder:font-semibold placeholder:text-night/30 focus:border-sky focus:outline-none";
 
+/** Matikan autofill browser agar data anak sebelumnya tidak muncul. */
+const noAutofill = { autoComplete: "off" } as const;
+
 export default function AuthFlow() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("daftar");
@@ -35,6 +38,16 @@ export default function AuthFlow() {
   const switchTab = (t: Tab) => {
     setTab(t);
     setError("");
+    // Bersihkan semua isian saat berpindah tab agar data
+    // anak/percobaan sebelumnya tidak tertinggal di form.
+    setStep("data");
+    setName("");
+    setClassName("");
+    setSchoolName("");
+    setPin("");
+    setPinConfirm("");
+    setLoginName("");
+    setLoginPin("");
   };
 
   const submitData = (e: React.FormEvent) => {
@@ -158,6 +171,7 @@ export default function AuthFlow() {
                     Siapa namamu?
                   </span>
                   <input
+                    {...noAutofill}
                     className={inputClass}
                     placeholder="contoh: Sinta"
                     value={name}
@@ -170,6 +184,7 @@ export default function AuthFlow() {
                     Kelas berapa?
                   </span>
                   <input
+                    {...noAutofill}
                     className={inputClass}
                     placeholder="contoh: 3B"
                     value={className}
@@ -182,6 +197,7 @@ export default function AuthFlow() {
                     Sekolahmu di mana?
                   </span>
                   <input
+                    {...noAutofill}
                     className={inputClass}
                     placeholder="contoh: SDN 1 Melati"
                     value={schoolName}
@@ -277,6 +293,7 @@ export default function AuthFlow() {
             <label className="flex w-full flex-col gap-1">
               <span className="text-sm font-bold text-night/60">Namamu</span>
               <input
+                {...noAutofill}
                 className={inputClass}
                 placeholder="contoh: Sinta"
                 value={loginName}
