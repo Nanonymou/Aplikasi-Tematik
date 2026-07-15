@@ -34,14 +34,38 @@ body {
   color: var(--color-night);
 }
 
-/* Tombol besar bergaya "pop" untuk jari kecil */
+/* Tombol besar bergaya "pop" untuk jari kecil.
+   min-height 44px = target sentuh ramah anak & aksesibel. */
 .btn-pop {
   @apply inline-flex items-center justify-center gap-2 rounded-3xl px-6 py-3 text-lg font-bold text-white transition-transform duration-100 select-none;
   box-shadow: var(--shadow-pop);
+  min-height: 44px;
 }
 .btn-pop:active {
   transform: translateY(4px);
   box-shadow: none;
+}
+
+/* Cincin fokus jelas untuk navigasi keyboard (hanya saat pakai keyboard). */
+:focus-visible {
+  outline: 3px solid var(--color-sky-deep);
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+}
+
+/* Hormati preferensi kurangi gerakan (aksesibilitas/mabuk gerak). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .animate-float-slow,
+  .animate-wiggle {
+    animation: none !important;
+  }
 }
 
 @keyframes float-slow {
