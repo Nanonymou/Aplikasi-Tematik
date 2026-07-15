@@ -94,6 +94,26 @@ export default function SettingsView() {
         <h1 className="text-2xl font-extrabold text-sky-deep">⚙️ Pengaturan</h1>
       </div>
 
+      <Link
+        href="/laporan"
+        className="flex items-center justify-between gap-3 rounded-3xl bg-white/85 px-5 py-4 shadow-pop-sm"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-3xl" aria-hidden>
+            📈
+          </span>
+          <div className="text-left">
+            <div className="font-extrabold text-night">Laporan Mingguan</div>
+            <div className="text-xs font-semibold text-night/50">
+              Lihat perkembangan si kecil dalam 7 hari terakhir
+            </div>
+          </div>
+        </div>
+        <span className="text-xl text-night/40" aria-hidden>
+          →
+        </span>
+      </Link>
+
       <section aria-label="Audio" className="flex flex-col gap-3">
         <Toggle
           emoji="🔊"
