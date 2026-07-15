@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { getCurrentUser, logoutUser, type UserProfile } from "@/lib/users";
 
 export default function HomePage() {
   const router = useRouter();
   // null = belum dicek (hindari hydration mismatch), lalu user atau "guest".
   const [user, setUser] = useState<UserProfile | null | "guest">(null);
+  const [confirmSwitch, setConfirmSwitch] = useState(false);
 
   useEffect(() => {
     setUser(getCurrentUser() ?? "guest");
@@ -87,16 +89,28 @@ export default function HomePage() {
             </Link>
             <button
               type="button"
-              onClick={() => {
-                logoutUser();
-                setUser("guest");
-                router.refresh();
-              }}
+              onClick={() => setConfirmSwitch(true)}
               className="rounded-2xl bg-white/70 px-4 py-2 text-sm font-bold text-night/60 shadow-pop-sm"
             >
               🔄 Ganti Anak
             </button>
           </div>
+
+          <ConfirmDialog
+            open={confirmSwitch}
+            emoji="👋"
+            title="Mau ganti anak?"
+            message={`Tenang, bintang dan nilai ${user.name} sudah tersimpan. Masuk lagi kapan saja dengan Nama dan PIN ya!`}
+            confirmLabel="Ya, Keluar"
+            cancelLabel="Di Sini Saja"
+            onConfirm={() => {
+              logoutUser();
+              setConfirmSwitch(false);
+              setUser("guest");
+              router.refresh();
+            }}
+            onCancel={() => setConfirmSwitch(false)}
+          />
         </>
       )}
     </main>
