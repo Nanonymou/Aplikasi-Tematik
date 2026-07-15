@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AuthGuard from "@/components/AuthGuard";
 import { isMathMode, MODE_LABELS } from "@/lib/questions";
 
 const TOPIC_COLORS = [
@@ -22,6 +23,7 @@ export default async function TopicPickerPage({
   const symbol = mode === "perkalian" ? "×" : "÷";
 
   return (
+    <AuthGuard>
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center gap-8 px-6 py-10">
       <Link
         href="/"
@@ -59,5 +61,6 @@ export default async function TopicPickerPage({
         ))}
       </div>
     </main>
+    </AuthGuard>
   );
 }

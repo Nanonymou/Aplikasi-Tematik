@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getCurrentUser, type UserProfile } from "@/lib/users";
+import { useRouter } from "next/navigation";
+import { getCurrentUser, logoutUser, type UserProfile } from "@/lib/users";
 
 export default function HomePage() {
+  const router = useRouter();
   // null = belum dicek (hindari hydration mismatch), lalu user atau "guest".
   const [user, setUser] = useState<UserProfile | null | "guest">(null);
 
@@ -76,12 +78,25 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <Link
-            href="/dashboard"
-            className="btn-pop bg-mint px-8 hover:bg-mint-deep"
-          >
-            📊 Dashboard Nilai
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/dashboard"
+              className="btn-pop bg-mint px-8 hover:bg-mint-deep"
+            >
+              📊 Dashboard Nilai
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                logoutUser();
+                setUser("guest");
+                router.refresh();
+              }}
+              className="rounded-2xl bg-white/70 px-4 py-2 text-sm font-bold text-night/60 shadow-pop-sm"
+            >
+              🔄 Ganti Anak
+            </button>
+          </div>
         </>
       )}
     </main>

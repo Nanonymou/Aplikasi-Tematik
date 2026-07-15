@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import AuthGuard from "@/components/AuthGuard";
 import ExerciseSession from "@/components/ExerciseSession";
 import { isMathMode, isValidTopic } from "@/lib/questions";
 
@@ -12,5 +13,9 @@ export default async function ExercisePage({
 
   if (!isMathMode(mode) || !isValidTopic(topicNumber)) notFound();
 
-  return <ExerciseSession mode={mode} topic={topicNumber} />;
+  return (
+    <AuthGuard>
+      <ExerciseSession mode={mode} topic={topicNumber} />
+    </AuthGuard>
+  );
 }
