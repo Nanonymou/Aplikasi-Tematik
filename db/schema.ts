@@ -75,6 +75,33 @@ export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
 
 /**
+ * Tabel `timer_results` — hasil tantangan kilat 60 detik (PRD: Mode Timer).
+ * Satu baris = satu sesi kilat. Dipakai untuk rekor & bintang bonus.
+ */
+export const timerResults = pgTable(
+  "timer_results",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** 'perkalian' atau 'pembagian'. */
+    mathType: varchar("math_type", { length: 12 }).notNull(),
+    correctAnswers: integer("correct_answers").notNull(),
+    wrongAnswers: integer("wrong_answers").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("timer_results_user_mode_idx").on(table.userId, table.mathType),
+  ],
+);
+
+export type TimerResult = typeof timerResults.$inferSelect;
+export type NewTimerResult = typeof timerResults.$inferInsert;
+
+/**
  * Tabel `user_stickers` — stiker yang sudah ditukar anak (PRD: Toko Stiker).
  * Satu baris = satu kepemilikan; kombinasi (user_id, sticker_id) unik
  * agar stiker yang sama tidak terbeli dua kali.

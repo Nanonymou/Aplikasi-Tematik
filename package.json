@@ -13,7 +13,8 @@
     "test:auth": "tsx tests/auth.test.ts",
     "test:challenge": "tsx tests/challenge.test.ts",
     "test:stickers": "tsx tests/stickers.test.ts",
-    "test:report": "tsx tests/report.test.ts"
+    "test:report": "tsx tests/report.test.ts",
+    "test:timer": "tsx tests/timer.test.ts"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0",
