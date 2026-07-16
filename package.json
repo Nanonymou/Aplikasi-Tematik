@@ -12,7 +12,8 @@
     "db:studio": "drizzle-kit studio",
     "test:auth": "tsx tests/auth.test.ts",
     "test:challenge": "tsx tests/challenge.test.ts",
-    "test:stickers": "tsx tests/stickers.test.ts"
+    "test:stickers": "tsx tests/stickers.test.ts",
+    "test:report": "tsx tests/report.test.ts"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0",

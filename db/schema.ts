@@ -1,4 +1,5 @@
 import {
+  index,
   integer,
   pgTable,
   text,
@@ -43,6 +44,35 @@ export const users = pgTable(
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+/**
+ * Tabel `sessions` — riwayat sesi latihan (PRD §6). Satu baris = satu sesi
+ * 10 soal yang selesai. Dipakai untuk dashboard & laporan mingguan.
+ */
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** 'perkalian' atau 'pembagian'. */
+    mathType: varchar("math_type", { length: 12 }).notNull(),
+    topicNumber: integer("topic_number").notNull(),
+    /** Nilai 0–100. */
+    score: integer("score").notNull(),
+    correctAnswers: integer("correct_answers").notNull(),
+    totalQuestions: integer("total_questions").notNull().default(10),
+    starsEarned: integer("stars_earned").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("sessions_user_created_idx").on(table.userId, table.createdAt)],
+);
+
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;
 
 /**
  * Tabel `user_stickers` — stiker yang sudah ditukar anak (PRD: Toko Stiker).
