@@ -3,6 +3,8 @@
  * Aman dipanggil berkali-kali; AudioContext dibuat sekali saat interaksi pertama.
  */
 
+import { isSfxEnabled } from "./settings";
+
 let ctx: AudioContext | null = null;
 
 function getContext(): AudioContext | null {
@@ -32,6 +34,7 @@ interface Tone {
 }
 
 function playTones(tones: Tone[]) {
+  if (!isSfxEnabled()) return;
   const audio = getContext();
   if (!audio) return;
   const now = audio.currentTime;

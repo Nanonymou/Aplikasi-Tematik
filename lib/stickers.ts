@@ -1,0 +1,72 @@
+import { loadSessionResults } from "./storage";
+import { getCurrentUser } from "./users";
+import { STICKER_CATALOG } from "./stickerCatalog";
+
+/**
+ * Toko Stiker (PRD: Sistem Hadiah) — data tiruan di frontend.
+ * Anak menukar bintang hasil latihan dengan stiker digital.
+ * Saldo = total bintang dari sesi latihan − bintang yang sudah dibelanjakan.
+ */
+
+export type { Sticker } from "./stickerCatalog";
+export { STICKER_CATALOG } from "./stickerCatalog";
+
+const OWNED_KEY = "bintang-berhitung:stickers";
+
+type OwnedMap = Record<string, string[]>; // userId -> stickerId[]
+
+function loadOwnedMap(): OwnedMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(OWNED_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Stiker milik anak yang sedang masuk. */
+export function getOwnedStickers(): string[] {
+  const user = getCurrentUser();
+  if (!user) return [];
+  return loadOwnedMap()[user.id] ?? [];
+}
+
+/** Bintang yang sudah dibelanjakan anak aktif. */
+export function getSpentStars(): number {
+  const owned = new Set(getOwnedStickers());
+  return STICKER_CATALOG.filter((s) => owned.has(s.id)).reduce(
+    (sum, s) => sum + s.price,
+    0,
+  );
+}
+
+/** Saldo bintang yang bisa dibelanjakan anak aktif (tidak pernah negatif). */
+export function getStarBalance(): number {
+  const earned = loadSessionResults().reduce((sum, s) => sum + s.stars, 0);
+  return Math.max(0, earned - getSpentStars());
+}
+
+/**
+ * Tukar bintang dengan stiker.
+ * @returns null kalau sukses, atau pesan error ramah anak.
+ */
+export function buySticker(stickerId: string): string | null {
+  const user = getCurrentUser();
+  if (!user) return "Masuk dulu yuk sebelum belanja stiker!";
+  const sticker = STICKER_CATALOG.find((s) => s.id === stickerId);
+  if (!sticker) return "Stiker ini tidak ditemukan.";
+  if (getOwnedStickers().includes(stickerId))
+    return "Stiker ini sudah kamu miliki! 😊";
+  if (getStarBalance() < sticker.price)
+    return "Bintangmu belum cukup. Ayo latihan lagi biar tambah! 💪";
+
+  try {
+    const map = loadOwnedMap();
+    map[user.id] = [...(map[user.id] ?? []), stickerId];
+    window.localStorage.setItem(OWNED_KEY, JSON.stringify(map));
+  } catch {
+    return "Waduh, gagal menyimpan. Coba lagi ya!";
+  }
+  return null;
+}

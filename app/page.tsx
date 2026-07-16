@@ -1,6 +1,21 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { getCurrentUser, logoutUser, type UserProfile } from "@/lib/users";
 
 export default function HomePage() {
+  const router = useRouter();
+  // null = belum dicek (hindari hydration mismatch), lalu user atau "guest".
+  const [user, setUser] = useState<UserProfile | null | "guest">(null);
+  const [confirmSwitch, setConfirmSwitch] = useState(false);
+
+  useEffect(() => {
+    setUser(getCurrentUser() ?? "guest");
+  }, []);
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center justify-center gap-8 px-6 py-12 text-center">
       <div className="animate-float-slow text-7xl" aria-hidden>
@@ -9,37 +24,119 @@ export default function HomePage() {
       <h1 className="text-4xl font-extrabold text-sky-deep drop-shadow-sm sm:text-5xl">
         Bintang Berhitung
       </h1>
-      <p className="max-w-md text-lg font-semibold text-night/70">
-        Ayo latihan perkalian dan pembagian angka 1 sampai 10! Jawab soal,
-        kumpulkan bintang, dan jadilah juara berhitung! 🎉
-      </p>
 
-      <div className="grid w-full gap-5 sm:grid-cols-2">
-        <Link
-          href="/latihan/perkalian"
-          className="btn-pop flex-col gap-1 bg-coral py-8 hover:bg-coral-deep"
-        >
-          <span className="text-5xl" aria-hidden>
-            ✖️
-          </span>
-          <span className="text-2xl">Perkalian</span>
-          <span className="text-sm font-semibold opacity-90">
-            1 × 1 sampai 10 × 10
-          </span>
-        </Link>
-        <Link
-          href="/latihan/pembagian"
-          className="btn-pop flex-col gap-1 bg-grape py-8 hover:bg-grape-deep"
-        >
-          <span className="text-5xl" aria-hidden>
-            ➗
-          </span>
-          <span className="text-2xl">Pembagian</span>
-          <span className="text-sm font-semibold opacity-90">
-            hasil 1 sampai 10
-          </span>
-        </Link>
-      </div>
+      {user === null && (
+        <p className="text-lg font-semibold text-night/50">Memuat… ✨</p>
+      )}
+
+      {user === "guest" && (
+        <>
+          <p className="max-w-md text-lg font-semibold text-night/70">
+            Ayo latihan perkalian dan pembagian angka 1 sampai 10! Kenalan dulu
+            yuk, biar bintang-bintangmu tersimpan! 🎒
+          </p>
+          <Link
+            href="/masuk"
+            className="btn-pop bg-coral px-10 py-5 text-2xl hover:bg-coral-deep"
+          >
+            🚀 Mulai Petualangan
+          </Link>
+        </>
+      )}
+
+      {user !== null && user !== "guest" && (
+        <>
+          <Link
+            href="/profil"
+            className="flex flex-col items-center gap-1 rounded-3xl px-4 py-1 hover:bg-white/40"
+          >
+            <span className="text-xl font-extrabold text-night/80">
+              Halo, {user.avatar} {user.name}!
+            </span>
+            <span className="text-sm font-bold text-night/50">
+              Kelas {user.className} • {user.schoolName} · lihat profil →
+            </span>
+          </Link>
+
+          <div className="grid w-full gap-5 sm:grid-cols-2">
+            <Link
+              href="/latihan/perkalian"
+              className="btn-pop flex-col gap-1 bg-coral py-8 hover:bg-coral-deep"
+            >
+              <span className="text-5xl" aria-hidden>
+                ✖️
+              </span>
+              <span className="text-2xl">Perkalian</span>
+              <span className="text-sm font-semibold opacity-90">
+                1 × 1 sampai 10 × 10
+              </span>
+            </Link>
+            <Link
+              href="/latihan/pembagian"
+              className="btn-pop flex-col gap-1 bg-grape py-8 hover:bg-grape-deep"
+            >
+              <span className="text-5xl" aria-hidden>
+                ➗
+              </span>
+              <span className="text-2xl">Pembagian</span>
+              <span className="text-sm font-semibold opacity-90">
+                hasil 1 sampai 10
+              </span>
+            </Link>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/timer"
+              className="btn-pop bg-sky px-8 hover:bg-sky-deep"
+            >
+              ⏱️ Mode Kilat
+            </Link>
+            <Link
+              href="/dashboard"
+              className="btn-pop bg-mint px-8 hover:bg-mint-deep"
+            >
+              📊 Dashboard Nilai
+            </Link>
+            <Link
+              href="/toko-stiker"
+              className="btn-pop bg-sunshine px-8 text-night hover:bg-sunshine-dark"
+            >
+              🛍️ Toko Stiker
+            </Link>
+            <button
+              type="button"
+              onClick={() => setConfirmSwitch(true)}
+              className="rounded-2xl bg-white/70 px-4 py-2 text-sm font-bold text-night/60 shadow-pop-sm"
+            >
+              🔄 Ganti Anak
+            </button>
+            <Link
+              href="/pengaturan"
+              className="rounded-2xl bg-white/70 px-4 py-2 text-sm font-bold text-night/60 shadow-pop-sm"
+            >
+              ⚙️ Pengaturan
+            </Link>
+          </div>
+
+          <ConfirmDialog
+            open={confirmSwitch}
+            emoji="👋"
+            title="Mau ganti anak?"
+            message={`Tenang, bintang dan nilai ${user.name} sudah tersimpan. Masuk lagi kapan saja dengan Nama dan PIN ya!`}
+            confirmLabel="Ya, Keluar"
+            cancelLabel="Di Sini Saja"
+            onConfirm={() => {
+              logoutUser();
+              setConfirmSwitch(false);
+              // Langsung ke layar selamat datang agar anak berikutnya
+              // bisa daftar/masuk tanpa langkah ekstra.
+              router.push("/masuk");
+            }}
+            onCancel={() => setConfirmSwitch(false)}
+          />
+        </>
+      )}
     </main>
   );
 }

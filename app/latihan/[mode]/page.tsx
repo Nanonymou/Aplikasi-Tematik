@@ -1,14 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AuthGuard from "@/components/AuthGuard";
+import TopicGrid from "@/components/TopicGrid";
 import { isMathMode, MODE_LABELS } from "@/lib/questions";
-
-const TOPIC_COLORS = [
-  "bg-coral hover:bg-coral-deep",
-  "bg-sky hover:bg-sky-deep",
-  "bg-mint hover:bg-mint-deep",
-  "bg-grape hover:bg-grape-deep",
-  "bg-sunshine hover:bg-sunshine-dark",
-];
 
 export default async function TopicPickerPage({
   params,
@@ -19,9 +13,9 @@ export default async function TopicPickerPage({
   if (!isMathMode(mode)) notFound();
 
   const label = MODE_LABELS[mode];
-  const symbol = mode === "perkalian" ? "×" : "÷";
 
   return (
+    <AuthGuard>
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center gap-8 px-6 py-10">
       <Link
         href="/"
@@ -42,22 +36,8 @@ export default async function TopicPickerPage({
         </p>
       </div>
 
-      <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-5">
-        {Array.from({ length: 10 }, (_, i) => i + 1).map((topic) => (
-          <Link
-            key={topic}
-            href={`/latihan/${mode}/${topic}`}
-            className={`btn-pop flex-col py-5 ${TOPIC_COLORS[(topic - 1) % TOPIC_COLORS.length]}`}
-          >
-            <span className="text-3xl font-extrabold">
-              {symbol} {topic}
-            </span>
-            <span className="text-xs font-semibold opacity-90">
-              {label} {topic}
-            </span>
-          </Link>
-        ))}
-      </div>
+      <TopicGrid mode={mode} />
     </main>
+    </AuthGuard>
   );
 }
