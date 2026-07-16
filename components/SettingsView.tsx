@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { stopMusic } from "@/lib/music";
 import {
   eraseAllData,
   loadSettings,
@@ -158,6 +159,9 @@ export default function SettingsView() {
         cancelLabel="Batal"
         onConfirm={() => {
           eraseAllData();
+          // eraseAllData tidak memicu event settings, jadi hentikan
+          // musik secara eksplisit (preferensi kembali ke default: mati).
+          stopMusic();
           setConfirmErase(false);
           router.replace("/masuk");
         }}

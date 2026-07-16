@@ -46,21 +46,17 @@ export function isMusicEnabled(): boolean {
 
 // ---------- Hapus Data ----------
 
-/** Semua kunci milik aplikasi ini di localStorage. */
-const APP_KEYS = [
-  "bintang-berhitung:sessions",
-  "bintang-berhitung:users",
-  "bintang-berhitung:current-user",
-  "bintang-berhitung:pin-attempts",
-  "bintang-berhitung:levels",
-  SETTINGS_KEY,
-];
-
-/** Hapus semua data aplikasi dan mulai dari awal (PRD: Hapus Data). */
+/**
+ * Hapus semua data aplikasi dan mulai dari awal (PRD: Hapus Data).
+ * Menyapu SEMUA kunci berprefix aplikasi agar kunci baru di masa depan
+ * tidak pernah tertinggal dari daftar manual.
+ */
 export function eraseAllData() {
   if (typeof window === "undefined") return;
-  for (const key of APP_KEYS) {
-    window.localStorage.removeItem(key);
+  const PREFIX = "bintang-berhitung:";
+  for (const storage of [window.localStorage, window.sessionStorage]) {
+    for (const key of Object.keys(storage)) {
+      if (key.startsWith(PREFIX)) storage.removeItem(key);
+    }
   }
-  window.sessionStorage.removeItem("bintang-berhitung:parent-gate-ok");
 }
