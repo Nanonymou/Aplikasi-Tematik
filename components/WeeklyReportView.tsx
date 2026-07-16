@@ -9,6 +9,16 @@ import {
   type WeeklyReport,
 } from "@/lib/report";
 import { getCurrentUser } from "@/lib/users";
+import { getOwnedStickers, STICKER_CATALOG } from "@/lib/stickers";
+import { loadSessionResults } from "@/lib/storage";
+import { getTimerBest } from "@/lib/timer";
+
+interface RewardSummary {
+  totalStars: number;
+  stickersOwned: number;
+  stickersTotal: number;
+  bestKilat: number;
+}
 
 function TopicRow({
   topic,
@@ -46,10 +56,20 @@ function TopicRow({
 export default function WeeklyReportView() {
   const [report, setReport] = useState<WeeklyReport | null>(null);
   const [childName, setChildName] = useState("");
+  const [reward, setReward] = useState<RewardSummary | null>(null);
 
   useEffect(() => {
     setChildName(getCurrentUser()?.name ?? "");
     setReport(buildWeeklyReport());
+    // Ringkasan hadiah (bintang, stiker, rekor kilat) — menyatukan
+    // Reward System ke tampilan orang tua yang ada di balik Parental Gate.
+    const owned = getOwnedStickers();
+    setReward({
+      totalStars: loadSessionResults().reduce((sum, s) => sum + s.stars, 0),
+      stickersOwned: owned.length,
+      stickersTotal: STICKER_CATALOG.length,
+      bestKilat: Math.max(getTimerBest("perkalian"), getTimerBest("pembagian")),
+    });
   }, []);
 
   if (!report) {
@@ -78,6 +98,44 @@ export default function WeeklyReportView() {
         Ringkasan latihan{childName ? ` ${childName}` : ""} dalam 7 hari
         terakhir untuk Ayah & Ibu.
       </p>
+
+      {/* Ringkasan Hadiah — menyatukan Reward System di area orang tua (gate) */}
+      {reward && (
+        <section
+          aria-label="Ringkasan hadiah"
+          className="rounded-3xl bg-white/85 p-5 shadow-pop"
+        >
+          <h2 className="mb-3 text-lg font-extrabold text-night">
+            🎁 Hadiah & Pencapaian
+          </h2>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-2xl bg-sunshine/20 px-3 py-4">
+              <div className="text-2xl font-extrabold text-sunshine-dark">
+                ⭐ {reward.totalStars}
+              </div>
+              <div className="text-[11px] font-bold text-night/55">
+                Total Bintang
+              </div>
+            </div>
+            <div className="rounded-2xl bg-grape/15 px-3 py-4">
+              <div className="text-2xl font-extrabold text-grape-deep">
+                🏅 {reward.stickersOwned}/{reward.stickersTotal}
+              </div>
+              <div className="text-[11px] font-bold text-night/55">
+                Koleksi Stiker
+              </div>
+            </div>
+            <div className="rounded-2xl bg-sky/15 px-3 py-4">
+              <div className="text-2xl font-extrabold text-sky-deep">
+                ⏱️ {reward.bestKilat}
+              </div>
+              <div className="text-[11px] font-bold text-night/55">
+                Rekor Kilat
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {report.totalSessions === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-3xl bg-white/85 p-8 text-center shadow-pop">
